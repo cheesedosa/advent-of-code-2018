@@ -1,0 +1,45 @@
+import nre
+import strutils
+import strformat
+
+# Define claim and parse from a string.
+type
+    Claim = tuple[id, x,y,width,height: int]
+
+let claimRegex = re"#([0-9]+)\s@\s([0-9]+),([0-9]+):\s([0-9]+)x([0-9]+)"
+proc parseClaim(claim: string): Claim =
+    let cl = claim.match(claimRegex).get()
+    (id: parseInt(cl.captures[0]),x:parseInt(cl.captures[1]),y:parseInt(cl.captures[2]),width:parseInt(cl.captures[3]),height:parseInt(cl.captures[4]))
+
+when isMainModule:
+    const 
+        MAXWIDTH = 1000
+    var
+        f: File
+        fabricGrid = newSeq[int](1000*1000)
+        claimed = 0
+    if open(f, "input.txt"):
+        var 
+            line: string
+            ok = true
+        
+        # Read in claims and set a count for overlapping claims in fabric.
+        while ok:
+            try:
+                line = readLine(f)
+                let cl= parseClaim(line)
+                for i in countup(cl.x+1, cl.x + cl.width):
+                    for j in countup(cl.y+1, cl.y + cl.height):
+                        fabricGrid[i*MAXWIDTH+j] += 1
+            except EOFError:
+                ok = false
+            except:
+                echo "error reading claims from file"
+                raise
+
+    # Find claims that are within 2 or more.
+    for _,x in fabricGrid:
+        if x >= 2:
+            claimed += 1
+    
+    echo &"number of square inches within two or more: {claimed}"
